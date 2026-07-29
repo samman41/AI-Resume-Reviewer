@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered Resume Reviewer and ATS Optimizer. Maximize your interview chances with tailored keyword matching, visual score gauges, and specific bullet point recommendations.">
+    <title>ResuMate AI | Smart Resume Analyzer &amp; Optimizer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation & Settings -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M12 18v-6"></path>
+                        <path d="M9 15h6"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>ResuMate <span>AI</span></h1>
+                    <p>Next-Gen ATS Optimizer</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" id="nav-workspace-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon">
+                            <rect x="3" y="3" width="7" height="9"></rect>
+                            <rect x="14" y="3" width="7" height="5"></rect>
+                            <rect x="14" y="12" width="7" height="9"></rect>
+                            <rect x="3" y="16" width="7" height="5"></rect>
+                        </svg>
+                        Workspace
+                    </li>
+                    <li id="nav-history-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Score History
+                    </li>
+                    <li id="nav-help-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        How it Works
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Sidebar Quick Stats -->
+            <div class="sidebar-stats">
+                <div class="sidebar-stat-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="display:inline;vertical-align:middle;margin-right:4px">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Session Stats
+                </div>
+                <div class="sidebar-stat-row">
+                    <span class="sidebar-stat-label">Analyses Run</span>
+                    <span class="sidebar-stat-val" id="stat-analyses">0</span>
+                </div>
+                <div class="sidebar-stat-row">
+                    <span class="sidebar-stat-label">Best Score</span>
+                    <span class="sidebar-stat-val" id="stat-best-score">—</span>
+                </div>
+                <div class="sidebar-stat-row">
+                    <span class="sidebar-stat-label">Avg Score</span>
+                    <span class="sidebar-stat-val" id="stat-avg-score">—</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="app-header">
+                <div class="header-info">
+                    <span class="badge" id="system-status">System Ready</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="load-demo-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Load Demo Data
+                    </button>
+                </div>
+            </header>
+
+            <div class="workspace-area">
+                <!-- PANEL 1: Upload and Input Form -->
+                <section class="panel active" id="input-panel">
+                    <div class="hero-section">
+                        <h2>Optimize your Resume for ATS</h2>
+                        <p>Upload your resume in PDF/DOCX format, paste the target job description, and get instant professional recommendations to pass automated screeners.</p>
+                    </div>
+
+                    <!-- Tips Ticker -->
+                    <div class="tips-ticker" id="tips-ticker">
+                        <div class="tips-ticker-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            Pro Tip
+                        </div>
+                        <div class="tips-ticker-text">
+                            <span id="tips-text" class="tip-animate">Use action verbs like "Led", "Architected", and "Delivered" to strengthen your bullet points.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <!-- Resume File Upload Card -->
+                        <div class="card upload-card">
+                            <div class="card-header">
+                                <span class="step-num">1</span>
+                                <h3>Upload Resume</h3>
+                            </div>
+                            <div class="drag-drop-zone" id="drop-zone">
+                                <input type="file" id="resume-file" accept=".pdf,.docx" style="display: none;">
+                                <div class="zone-content">
+                                    <div class="icon-glow">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <p class="main-instruction">Drag &amp; drop your file here or <span class="highlight">browse</span></p>
+                                    <p class="sub-instruction">Supports PDF and Word Document (.docx) up to 10MB</p>
+                                </div>
+                            </div>
+                            <div class="file-details-card" id="file-details" style="display: none;">
+                                <div class="file-info">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="doc-icon">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <div>
+                                        <h4 id="file-name">Resume.pdf</h4>
+                                        <p id="file-size">1.2 MB</p>
+                                    </div>
+                                </div>
+                                <button class="btn-icon-only remove-file-btn" id="remove-file-btn" title="Remove file">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Job Description Card -->
+                        <div class="card jd-card">
+                            <div class="card-header">
+                                <span class="step-num">2</span>
+                                <h3>Job Description</h3>
+                            </div>
+                            <div class="textarea-container">
+                                <textarea id="jd-text" placeholder="Paste the full job description details (responsibilities, skills, qualifications) here..."></textarea>
+                                <div class="textarea-actions">
+                                    <span id="jd-char-count">0 characters</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-footer">
+                        <button class="btn btn-primary btn-large btn-glow" id="analyze-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            Analyze &amp; Optimize
+                        </button>
+                    </div>
+                </section>
+
+                <!-- PANEL 2: Loading State -->
+                <section class="panel" id="loading-panel">
+                    <div class="loading-container">
+                        <div class="loading-visual">
+                            <div class="spinner-glow"></div>
+                            <div class="doc-scanner">
+                                <div class="scanning-doc">
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line"></div>
+                                </div>
+                                <div class="scanner-bar"></div>
+                            </div>
+                        </div>
+                        <h2>Analyzing Resume Fit...</h2>
+                        <p>Our AI is parsing your resume structure and matching it against key job descriptors.</p>
+                        
+                        <div class="terminal-logs-card">
+                            <div class="terminal-header">
+                                <div class="dot-red"></div>
+                                <div class="dot-yellow"></div>
+                                <div class="dot-green"></div>
+                                <span class="terminal-title">Processing Status</span>
+                            </div>
+                            <div class="terminal-body" id="log-console">
+                                <p class="log-line">> Initiating workspace analysis...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANEL 3: Analysis Results Dashboard -->
+                <section class="panel" id="results-panel">
+                    <!-- Dashboard Header -->
+                    <div class="results-header">
+                        <div class="results-title-area">
+                            <button class="btn-back" id="back-to-input-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                Adjust inputs
+                            </button>
+                            <h2>Analysis Dashboard</h2>
+                        </div>
+                        <div class="results-action-area">
+                            <button class="btn btn-secondary" id="print-pdf-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                    <path d="M6 9V2h12v7"></path>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                    <rect x="6" y="14" width="12" height="8"></rect>
+                                </svg>
+                                Export PDF Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 🔥 "Improve Your Resume" Alert Banner (shown when score < 60) -->
+                    <div class="improve-banner" id="improve-banner">
+                        <div class="improve-banner-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                        </div>
+                        <div class="improve-banner-body">
+                            <h4>Your Resume Needs Improvement</h4>
+                            <p id="improve-banner-text">Your score is below 60% — a recruiter may pass on it. Review the Action Steps tab and apply the AI suggestions below to boost your match.</p>
+                        </div>
+                        <div class="improve-banner-actions">
+                            <button class="btn btn-improve" id="go-to-action-steps-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                </svg>
+                                Fix My Resume
+                            </button>
+                            <button class="btn btn-secondary" id="dismiss-banner-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Row (Match Score + Categorized Scores) -->
+                    <div class="dashboard-row match-summary-row">
+                        <!-- SVG Radial Gauge for Match Score -->
+                        <div class="card score-card">
+                            <h3>Overall Match Score</h3>
+                            <div class="gauge-wrapper">
+                                <svg class="progress-ring" width="160" height="160">
+                                    <circle class="progress-ring__circle-bg" stroke="#1e1e22" stroke-width="12" fill="transparent" r="64" cx="80" cy="80" />
+                                    <circle class="progress-ring__circle" stroke="url(#gradientSilver)" stroke-width="12" fill="transparent" r="64" cx="80" cy="80" stroke-dasharray="402" stroke-dashoffset="402" stroke-linecap="round" />
+                                    <defs>
+                                        <linearGradient id="gradientSilver" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4a4a54" />
+                                            <stop offset="50%" stop-color="#c0c0c8" />
+                                            <stop offset="100%" stop-color="#7a7a84" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="gauge-label-container">
+                                    <span class="gauge-value" id="res-match-score">0</span>
+                                    <span class="gauge-percent">%</span>
+                                </div>
+                            </div>
+                            <div class="rating-badge" id="res-rating-badge">Strong Match</div>
+                        </div>
+
+                        <!-- Analysis Details & Categories -->
+                        <div class="card details-card">
+                            <h3>Match Breakdown</h3>
+                            <p class="summary-paragraph" id="res-summary">Loading analysis summary details...</p>
+                            
+                            <div class="category-scores-container" id="category-scores-list">
+                                <!-- Category scores will be dynamically inserted here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Stats Row -->
+                    <div class="score-counter-row" id="mini-stats-row">
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-value" id="stat-keywords-match">0</div>
+                            <div class="mini-stat-label">Keywords Matched</div>
+                        </div>
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-value" id="stat-keywords-missing">0</div>
+                            <div class="mini-stat-label">Keywords Missing</div>
+                        </div>
+                        <div class="mini-stat-card">
+                            <div class="mini-stat-value" id="stat-rewrites">0</div>
+                            <div class="mini-stat-label">AI Rewrites Ready</div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Analysis Detail Section -->
+                    <div class="tabs-container">
+                        <!-- Navigation Tabs -->
+                        <nav class="tabs-nav">
+                            <button class="tab-btn active" data-tab="tab-overview">Overview</button>
+                            <button class="tab-btn" data-tab="tab-keywords">Keyword Insights</button>
+                            <button class="tab-btn" data-tab="tab-tailoring">AI Resume Tailoring</button>
+                            <button class="tab-btn" data-tab="tab-improvements">Action Steps</button>
+                        </nav>
+
+                        <!-- Tab Content Cards -->
+                        <div class="tab-content active" id="tab-overview">
+                            <div class="overview-grid">
+                                <div class="card border-green">
+                                    <div class="card-title-with-icon text-green">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="title-icon">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                                        <h3>Resume Strengths</h3>
+                                    </div>
+                                    <ul class="styled-list list-green" id="res-strengths">
+                                        <!-- Dynamic strengths -->
+                                    </ul>
+                                </div>
+                                <div class="card border-rose">
+                                    <div class="card-title-with-icon text-rose">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="title-icon">
+                                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <h3>Identified Gaps</h3>
+                                    </div>
+                                    <ul class="styled-list list-rose" id="res-gaps">
+                                        <!-- Dynamic gaps -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Keywords Tab -->
+                        <div class="tab-content" id="tab-keywords">
+                            <div class="keywords-grid">
+                                <div class="card">
+                                    <h3>Matching Skills &amp; Keywords</h3>
+                                    <p class="tab-intro-text">These terms were successfully detected in your resume, matching the target job description.</p>
+                                    <div class="badge-grid" id="res-matching-keywords">
+                                        <!-- Dynamic matching keywords -->
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <h3>Missing Skills &amp; Keywords</h3>
+                                    <p class="tab-intro-text">Consider adding these terms to your resume if you have experience with them, to satisfy ATS parsing engines.</p>
+                                    <div class="badge-grid" id="res-missing-keywords">
+                                        <!-- Dynamic missing keywords -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tailoring AI Tab -->
+                        <div class="tab-content" id="tab-tailoring">
+                            <div class="card border-silver">
+                                <h3>Tailored Experience Recommendations</h3>
+                                <p class="tab-intro-text">Recruiters search for quantifiable accomplishments. Modify these bullet points on your resume to dramatically improve your relevance.</p>
+                                <div class="bullets-container" id="res-bullet-improvements">
+                                    <!-- Dynamic bullet point improvements -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Improvements/Recommendations Tab -->
+                        <div class="tab-content" id="tab-improvements">
+                            <div class="card border-indigo">
+                                <div class="roadmap-progress-header">
+                                    <h4 style="font-family:var(--font-heading);font-size:1.05rem;font-weight:600;color:var(--text-primary)">Step-by-Step Optimization Roadmap</h4>
+                                    <div class="roadmap-progress-bar-wrap">
+                                        <div class="roadmap-progress-bar-fill" id="roadmap-progress-fill"></div>
+                                    </div>
+                                    <span class="roadmap-progress-count" id="roadmap-progress-count">0 / 0 done</span>
+                                </div>
+                                <p class="tab-intro-text">Click each step to mark it complete. Follow this ordered sequence to maximize your alignment with the role.</p>
+                                <div class="roadmap-container" id="res-recommendations">
+                                    <!-- Dynamic recommendations list -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANEL 4: Score History -->
+                <section class="panel" id="history-panel">
+                    <div class="hero-section">
+                        <h2>Score History</h2>
+                        <p>Track your resume performance across multiple analyses in this session.</p>
+                    </div>
+                    <div class="score-history-card">
+                        <h3>Past Analysis Results</h3>
+                        <p class="tab-intro-text">Each time you analyze a resume, the result is saved here for comparison.</p>
+                        <div class="score-history-list" id="score-history-list">
+                            <div class="score-history-empty" id="history-empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="margin:0 auto 12px;display:block;opacity:0.3">
+                                    <path d="M9 11l3 3L22 4"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                                <p>No analyses yet. Run your first resume analysis to see history here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANEL 5: "How It Works" info panel -->
+                <section class="panel" id="help-panel">
+                    <div class="help-content-card">
+                        <h2>How the ATS Optimizer Works</h2>
+                        <p>Most modern employers use Applicant Tracking Systems (ATS) to filter out resumes before a human recruiter ever sees them. Here is how ResuMate AI helps you bypass these digital gatekeepers:</p>
+                        
+                        <div class="workflow-steps">
+                            <div class="workflow-step">
+                                <div class="step-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <h4>1. Document Processing</h4>
+                                <p>Extracts text metadata directly from PDF and MS Word documents without breaking formatting characters.</p>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                        <polyline points="2 17 12 22 22 17"></polyline>
+                                        <polyline points="2 12 12 17 22 12"></polyline>
+                                    </svg>
+                                </div>
+                                <h4>2. Semantic Matching</h4>
+                                <p>Utilizes Gemini's advanced LLM capacity to analyze contextual meaning rather than raw keyword stuffing.</p>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                </div>
+                                <h4>3. Multi-Dimension Scoring</h4>
+                                <p>Grades formatting readability, educational match, skills alignment, and structural metrics.</p>
+                            </div>
+                        </div>
+
+                        <div class="help-cta">
+                            <button class="btn btn-primary" id="return-workspace-btn">Go back to Workspace</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
