@@ -45,7 +45,7 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
                 text += page_text + "\n"
         return text.strip()
     except Exception as e:
-        raise ValueError(f"Error reading PDF file: {str(e)}")
+        raise ValueError("We couldn't read the text from your PDF. It might be corrupted, password-protected, or in an unsupported format. Please try saving it as a new PDF and upload again.")
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     """Extracts text content from DOCX file bytes."""
@@ -63,7 +63,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
                     text.append(cell.text)
         return "\n".join(text).strip()
     except Exception as e:
-        raise ValueError(f"Error reading DOCX file: {str(e)}")
+        raise ValueError("We couldn't read the text from your DOCX file. It might be corrupted or protected. Please try saving it as a new Word document and upload again.")
 
 def extract_resume_text(filename: str, file_bytes: bytes) -> str:
     """Detects file type and extracts text."""

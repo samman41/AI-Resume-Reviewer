@@ -137,6 +137,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const goToActionStepsBtn  = document.getElementById("go-to-action-steps-btn");
     const dismissBannerBtn    = document.getElementById("dismiss-banner-btn");
 
+    /* ---- Error banner ---- */
+    const extractionErrorBanner = document.getElementById("extraction-error-banner");
+    const dismissErrorBtn       = document.getElementById("dismiss-error-btn");
+    if (dismissErrorBtn && extractionErrorBanner) {
+        dismissErrorBtn.addEventListener("click", () => {
+            extractionErrorBanner.style.display = "none";
+        });
+    }
+
     /* ---- Mini stats ---- */
     const statKeywordsMatch   = document.getElementById("stat-keywords-match");
     const statKeywordsMissing = document.getElementById("stat-keywords-missing");
@@ -709,6 +718,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (extractionErrorBanner) {
+            extractionErrorBanner.style.display = "none";
+        }
+
         systemStatus.textContent = "Processing Resume";
         systemStatus.className   = "badge loading";
         showPanel(loadingPanel);
@@ -751,8 +764,14 @@ document.addEventListener("DOMContentLoaded", () => {
             systemStatus.className   = "badge";
 
             setTimeout(() => {
-                alert(error.message);
                 showPanel(inputPanel);
+                const errorText = document.getElementById("extraction-error-text");
+                if (extractionErrorBanner && errorText) {
+                    errorText.textContent = error.message;
+                    extractionErrorBanner.style.display = "flex";
+                } else {
+                    alert(error.message);
+                }
             }, 2500);
         }
     });

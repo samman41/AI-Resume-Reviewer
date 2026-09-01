@@ -122,6 +122,30 @@
                         </div>
                     </div>
 
+                    <!-- Extraction Error Banner -->
+                    <div class="improve-banner" id="extraction-error-banner" style="display: none; border-left-color: var(--color-error); background: var(--color-error-bg); margin-bottom: 24px;">
+                        <div class="improve-banner-icon" style="color: var(--color-error); background: transparent;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="improve-banner-body">
+                            <h4 style="color: var(--color-error);">Text Extraction Failed</h4>
+                            <p id="extraction-error-text" style="color: var(--text-primary);">Error message goes here</p>
+                        </div>
+                        <div class="improve-banner-actions">
+                            <button class="btn btn-secondary" id="dismiss-error-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-grid">
                         <!-- Resume File Upload Card -->
                         <div class="card upload-card">
