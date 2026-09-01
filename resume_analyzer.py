@@ -20,8 +20,8 @@ class KeywordMatch(BaseModel):
 
 class BulletPointImprovement(BaseModel):
     original: str = Field(description="Original bullet point or experience description from the resume")
-    improved: str = Field(description="A highly tailored, metric-driven, action-oriented version of the bullet point aligned with the JD")
-    reason: str = Field(description="Brief explanation of the optimization made (e.g. added action verbs, aligned with specific JD requirements, added potential metrics)")
+    improved: str = Field(description="A stronger rewritten version of the bullet point using strong action verbs. Do NOT invent metrics, percentages, or experience. Only use facts from the resume.")
+    reason: str = Field(description="Identify why the original is weak and explain the improvements made. If there is not enough information to quantify, explicitly state what measurable/quantifiable information the user should add themselves.")
 
 class ResumeAnalysis(BaseModel):
     match_score: int = Field(description="Overall ATS match score between the resume and the job description, from 0 to 100")
@@ -93,6 +93,35 @@ You are an expert ATS (Applicant Tracking System) parser and senior recruiter.
 Analyze the candidate's resume below against the provided Job Description (JD).
 Your evaluation must be objective, meticulous, and provide actionable, high-impact improvements.
 
+CRITICAL SCORING LOGIC FOR QUALIFICATIONS AND EXPERIENCE:
+You must FIRST extract and evaluate the following:
+A. Mandatory qualifications
+B. Mandatory certifications/licences
+C. Required technical/domain skills
+D. Required industry-specific experience
+E. Required years/type of experience
+F. Preferred qualifications
+G. Transferable skills
+
+Evaluate the candidate in this strict order:
+1. Mandatory/core qualifications
+2. Required technical or domain-specific skills
+3. Required industry-specific experience
+4. Required certifications/licences, if applicable
+5. Relevant job-specific experience
+6. Transferable skills
+7. General/soft skills
+
+- CORE MISMATCH: If a mandatory qualification, required domain skill, or required industry experience is clearly missing, this is a CRITICAL GAP. Do NOT allow transferable skills to compensate for a missing mandatory/core qualification. The match score MUST drop significantly (HIGH IMPACT).
+- PREFERRED VS MANDATORY: Distinguish between REQUIRED/MANDATORY and PREFERRED qualifications. Missing a preferred qualification should have a MEDIUM/LOW IMPACT. Do NOT automatically reject or heavily penalize a candidate from a different industry if the JD says industry experience is "preferred" or not strictly required.
+- EXPLANATION REQUIREMENT: When there is a major qualification mismatch, clearly explain in your summary or gaps:
+  1. What the job requires.
+  2. What the resume shows.
+  3. What is missing or mismatched.
+  4. Whether the requirement appears mandatory or preferred.
+  5. How this affects the overall match.
+- NO HALLUCINATION: ONLY use information found in the resume and JD. NEVER invent qualifications, experience, skills, etc. If something is missing, explicitly state "The qualification is not demonstrated in the provided resume." Do not say the candidate definitely does not have it unless the available evidence supports that conclusion.
+
 Resume Text:
 {resume_text}
 
@@ -103,10 +132,10 @@ Provide:
 1. An overall match score (0-100) and rating category.
 2. Dimension scores (Skills Alignment, Experience Relevance, Formatting & Structure, Education) with specific feedback.
 3. Top strengths matching the JD.
-4. Core gaps where the resume fails to meet the JD criteria.
+4. Core gaps where the resume fails to meet the JD criteria. If a mandatory qualification is missing, explicitly flag it as a critical gap and explain the mismatch.
 5. Specific actionable recommendations for changes.
 6. A list of critical keywords and skills from the JD (identify if they are present or missing, and their importance level).
-7. Specific before-and-after bullet point rewrites using action verbs, metrics, and JD alignment.
+7. Specific before-and-after bullet point rewrites. For weak bullets, identify why they are weak and provide a stronger rewritten version using strong action verbs. Make the wording more specific where the source resume provides enough info. NEVER invent numbers, percentages, achievements, responsibilities, companies, or experience. If there is not enough info to create a genuinely specific or quantified bullet, suggest what measurable/quantifiable info the user should add. Clearly distinguish between a safe rewrite based on existing info, and additional info the candidate could add themselves.
 """
 
     response = client.models.generate_content(

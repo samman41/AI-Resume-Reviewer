@@ -751,7 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
             systemStatus.className   = "badge";
 
             setTimeout(() => {
-                alert(`Analysis Failed:\n${error.message}`);
+                alert(error.message);
                 showPanel(inputPanel);
             }, 2500);
         }

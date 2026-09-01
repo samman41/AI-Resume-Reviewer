@@ -53,7 +53,7 @@ async def api_analyze(
         raise HTTPException(status_code=500, detail=f"Failed to process resume file: {str(e)}")
     
     if not resume_text.strip():
-        raise HTTPException(status_code=400, detail="Failed to extract any text from the uploaded resume file.")
+        raise HTTPException(status_code=400, detail="We couldn't find any readable text in this resume. Please upload a resume containing selectable text and try again.")
 
     # 3. Resolve API key (header overrides environment variable)
     api_key = x_gemini_api_key or os.environ.get("GEMINI_API_KEY")
