@@ -157,3 +157,78 @@ Provide:
         import json
         data = json.loads(response.text)
         return ResumeAnalysis(**data)
+
+def tailor_resume(resume_text: str, jd_text: str, api_key: Optional[str] = None) -> str:
+    """
+    Sends the resume text and job description to Gemini 2.5 Flash
+    and returns a fully rewritten resume optimized for the job description.
+    """
+    effective_api_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not effective_api_key:
+        raise ValueError("Gemini API key is required. Please set the GEMINI_API_KEY environment variable or pass it in the request.")
+
+    client = genai.Client(api_key=effective_api_key)
+
+    prompt = f"""
+You are an expert resume writer and career coach.
+Your task is to completely rewrite the provided resume so that it is highly optimized for the given Job Description (JD).
+Follow these guidelines strictly:
+1. Preserve the truth: Do not invent experience, skills, degrees, or metrics that the candidate does not have.
+2. Tailor for the JD: Rephrase bullet points, summaries, and skills to highlight the most relevant aspects of the candidate's background according to the JD. Use the JD's terminology where applicable.
+3. Enhance impact: Use strong action verbs. Ensure accomplishments are clear.
+4. Format: Output the rewritten resume in clean, professional Markdown format.
+
+Resume Text:
+{resume_text}
+
+Job Description:
+{jd_text}
+
+Return ONLY the Markdown formatted rewritten resume. Do not include any introductory or concluding remarks.
+"""
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.4,
+        ),
+    )
+    return response.text
+
+def generate_cover_letter(resume_text: str, jd_text: str, api_key: Optional[str] = None) -> str:
+    """
+    Sends the resume text and job description to Gemini 2.5 Flash
+    and returns a tailored cover letter.
+    """
+    effective_api_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not effective_api_key:
+        raise ValueError("Gemini API key is required. Please set the GEMINI_API_KEY environment variable or pass it in the request.")
+
+    client = genai.Client(api_key=effective_api_key)
+
+    prompt = f"""
+You are an expert career coach and professional writer.
+Your task is to write a compelling, fully personalized cover letter based on the provided resume and Job Description (JD).
+Follow these guidelines strictly:
+1. Automatically pull the candidate's name, contact details, and relevant experience from the CV.
+2. Integrate these details seamlessly with the job requirements from the JD so the letter is ready to use without further editing.
+3. Preserve the truth: Do not invent experience, skills, degrees, or metrics that the candidate does not have.
+4. Keep it concise: Write 3-4 impactful paragraphs.
+5. Format: Output the cover letter in clean, professional Markdown format.
+
+Resume Text:
+{resume_text}
+
+Job Description:
+{jd_text}
+
+Return ONLY the Markdown formatted cover letter. Do not include any introductory or concluding remarks.
+"""
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.5,
+        ),
+    )
+    return response.text

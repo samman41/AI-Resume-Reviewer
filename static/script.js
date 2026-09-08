@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* ---- Panel & Nav references ---- */
     const navWorkspaceBtn  = document.getElementById("nav-workspace-btn");
+    const navTailorBtn     = document.getElementById("nav-tailor-btn");
     const navHistoryBtn    = document.getElementById("nav-history-btn");
     const navHelpBtn       = document.getElementById("nav-help-btn");
     const returnWorkspaceBtn = document.getElementById("return-workspace-btn");
@@ -102,7 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultsPanel = document.getElementById("results-panel");
     const historyPanel = document.getElementById("history-panel");
     const helpPanel    = document.getElementById("help-panel");
-    const panels = [inputPanel, loadingPanel, resultsPanel, historyPanel, helpPanel];
+    const tailorPanel  = document.getElementById("tailor-panel");
+    const panels = [inputPanel, loadingPanel, resultsPanel, historyPanel, helpPanel, tailorPanel];
 
     /* ---- File Upload ---- */
     const dropZone       = document.getElementById("drop-zone");
@@ -111,6 +113,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const fileNameEl     = document.getElementById("file-name");
     const fileSizeEl     = document.getElementById("file-size");
     const removeFileBtn  = document.getElementById("remove-file-btn");
+
+    /* ---- Tailor File Upload & Form ---- */
+    let tailorSelectedFile = null;
+    const tailorDropZone       = document.getElementById("tailor-drop-zone");
+    const tailorResumeFileInput = document.getElementById("tailor-resume-file");
+    const tailorFileDetails    = document.getElementById("tailor-file-details");
+    const tailorFileNameEl     = document.getElementById("tailor-file-name");
+    const tailorFileSizeEl     = document.getElementById("tailor-file-size");
+    const tailorRemoveFileBtn  = document.getElementById("tailor-remove-file-btn");
+    const tailorJdTextarea     = document.getElementById("tailor-jd-text");
+    const tailorJdCharCount    = document.getElementById("tailor-jd-char-count");
+    const tailorBtn            = document.getElementById("tailor-btn");
+    const tailorCoverLetterBtn = document.getElementById("tailor-cover-letter-btn");
+    const tailorResultSection  = document.getElementById("tailor-result-section");
+    const tailorResultText     = document.getElementById("tailor-result-text");
+    const tailorResultTitle    = document.getElementById("tailor-result-title");
+    const tailorCopyBtn        = document.getElementById("tailor-copy-btn");
+    const tailorDownloadPdfBtn = document.getElementById("tailor-download-pdf-btn");
 
     /* ---- Form ---- */
     const jdTextarea   = document.getElementById("jd-text");
@@ -197,6 +217,11 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             showPanel(inputPanel);
         }
+    });
+
+    navTailorBtn.addEventListener("click", () => {
+        setActiveNav(navTailorBtn);
+        showPanel(tailorPanel);
     });
 
     navHistoryBtn.addEventListener("click", () => {
@@ -289,6 +314,60 @@ document.addEventListener("DOMContentLoaded", () => {
         resumeFileInput.value = "";
         dropZone.style.display = "block";
         fileDetails.style.display = "none";
+    });
+
+    /* ============================================================
+       Tailor Drag & Drop File Upload
+       ============================================================ */
+    tailorDropZone.addEventListener("click", () => tailorResumeFileInput.click());
+
+    ["dragenter", "dragover"].forEach(ev => {
+        tailorDropZone.addEventListener(ev, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            tailorDropZone.classList.add("dragover");
+        }, false);
+    });
+
+    ["dragleave", "drop"].forEach(ev => {
+        tailorDropZone.addEventListener(ev, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            tailorDropZone.classList.remove("dragover");
+        }, false);
+    });
+
+    tailorDropZone.addEventListener("drop", (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length) handleTailorFileSelect(files[0]);
+    });
+
+    tailorResumeFileInput.addEventListener("change", (e) => {
+        const files = e.target.files;
+        if (files.length) handleTailorFileSelect(files[0]);
+    });
+
+    function handleTailorFileSelect(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext !== 'pdf' && ext !== 'docx') {
+            alert("Format unsupported. Please upload a PDF or Microsoft Word DOCX file.");
+            return;
+        }
+        tailorSelectedFile = file;
+        tailorFileNameEl.textContent = file.name;
+        tailorFileSizeEl.textContent = formatBytes(file.size);
+        tailorDropZone.style.display = "none";
+        tailorFileDetails.style.display = "flex";
+    }
+
+    tailorRemoveFileBtn.addEventListener("click", () => {
+        tailorSelectedFile = null;
+        tailorResumeFileInput.value = "";
+        tailorDropZone.style.display = "block";
+        tailorFileDetails.style.display = "none";
+    });
+
+    tailorJdTextarea.addEventListener("input", () => {
+        const count = tailorJdTextarea.value.length;
+        tailorJdCharCount.textContent = `${count.toLocaleString()} character${count !== 1 ? 's' : ''}`;
     });
 
     /* ============================================================
@@ -774,5 +853,131 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }, 2500);
         }
+    });
+
+    /* ============================================================
+       Tailor Resume (API Call)
+       ============================================================ */
+    tailorBtn.addEventListener("click", async () => {
+        if (!tailorSelectedFile) {
+            alert("Please upload your resume file (PDF or DOCX) first.");
+            return;
+        }
+
+        const jdText = tailorJdTextarea.value.trim();
+        if (!jdText) {
+            alert("Please paste the target job description to match against.");
+            return;
+        }
+
+        const originalBtnText = tailorBtn.innerHTML;
+        tailorBtn.innerHTML = '<div class="spinner-glow" style="width:16px;height:16px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></div> Generating...';
+        tailorBtn.disabled = true;
+        tailorResultSection.style.display = "none";
+
+        const formData = new FormData();
+        formData.append("resume", tailorSelectedFile);
+        formData.append("jd", jdText);
+
+        try {
+            const response = await fetch("/api/tailor", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || "Server returned an error during tailoring.");
+            }
+
+            const data = await response.json();
+            tailorResultText.textContent = data.rewritten_resume;
+            tailorResultTitle.textContent = "Optimized Resume";
+            tailorResultSection.style.display = "block";
+            tailorDownloadPdfBtn.style.display = "flex";
+            
+            // Scroll to results
+            tailorResultSection.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error("Tailoring error:", error);
+            alert(error.message);
+        } finally {
+            tailorBtn.innerHTML = originalBtnText;
+            tailorBtn.disabled = false;
+        }
+    });
+
+    tailorCopyBtn.addEventListener("click", () => {
+        const text = tailorResultText.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = tailorCopyBtn.innerHTML;
+            tailorCopyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Copied!
+            `;
+            tailorCopyBtn.style.color = "var(--color-success)";
+            setTimeout(() => {
+                tailorCopyBtn.innerHTML = orig;
+                tailorCopyBtn.style.color = "";
+            }, 2000);
+        });
+    });
+
+    /* ============================================================
+       Generate Cover Letter (API Call)
+       ============================================================ */
+    tailorCoverLetterBtn.addEventListener("click", async () => {
+        if (!tailorSelectedFile) {
+            alert("Please upload your resume file (PDF or DOCX) first.");
+            return;
+        }
+
+        const jdText = tailorJdTextarea.value.trim();
+        if (!jdText) {
+            alert("Please paste the target job description to match against.");
+            return;
+        }
+
+        const originalBtnText = tailorCoverLetterBtn.innerHTML;
+        tailorCoverLetterBtn.innerHTML = '<div class="spinner-glow" style="width:16px;height:16px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></div> Generating...';
+        tailorCoverLetterBtn.disabled = true;
+        tailorResultSection.style.display = "none";
+
+        const formData = new FormData();
+        formData.append("resume", tailorSelectedFile);
+        formData.append("jd", jdText);
+
+        try {
+            const response = await fetch("/api/cover-letter", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || "Server returned an error during cover letter generation.");
+            }
+
+            const data = await response.json();
+            tailorResultText.textContent = data.cover_letter;
+            tailorResultTitle.textContent = "Generated Cover Letter";
+            tailorResultSection.style.display = "block";
+            tailorDownloadPdfBtn.style.display = "flex";
+            
+            // Scroll to results
+            tailorResultSection.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error("Cover letter error:", error);
+            alert(error.message);
+        } finally {
+            tailorCoverLetterBtn.innerHTML = originalBtnText;
+            tailorCoverLetterBtn.disabled = false;
+        }
+    });
+
+    tailorDownloadPdfBtn.addEventListener("click", () => {
+        window.print();
     });
 });

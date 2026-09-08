@@ -650,7 +650,7 @@ body::before {
     box-shadow: 0 0 20px rgba(192, 192, 192, 0.08);
 }
 
-#jd-text {
+#jd-text, #tailor-jd-text {
     flex-grow: 1;
     background: transparent;
     border: none;
@@ -663,7 +663,7 @@ body::before {
     outline: none;
 }
 
-#jd-text::placeholder {
+#jd-text::placeholder, #tailor-jd-text::placeholder {
     color: var(--text-muted);
 }
 
@@ -676,7 +676,7 @@ body::before {
     align-items: center;
 }
 
-#jd-char-count {
+#jd-char-count, #tailor-jd-char-count {
     color: var(--text-muted);
     font-size: 0.75rem;
 }
