@@ -8,6 +8,13 @@ const state = {
     roadmapCompleted: new Set(),
     totalRoadmapItems: 0,
     tipIndex: 0,
+    
+    // Mock Interview State
+    mockQuestions: [],
+    currentMockIndex: 0,
+    isRecording: false,
+    recognition: null,
+    mockHistory: []
 };
 
 // ============================================================
@@ -93,6 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ---- Panel & Nav references ---- */
     const navWorkspaceBtn  = document.getElementById("nav-workspace-btn");
     const navTailorBtn     = document.getElementById("nav-tailor-btn");
+    const navInterviewBtn  = document.getElementById("nav-interview-btn");
+    const navMockBtn       = document.getElementById("nav-mock-btn");
     const navHistoryBtn    = document.getElementById("nav-history-btn");
     const navHelpBtn       = document.getElementById("nav-help-btn");
     const returnWorkspaceBtn = document.getElementById("return-workspace-btn");
@@ -104,7 +113,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const historyPanel = document.getElementById("history-panel");
     const helpPanel    = document.getElementById("help-panel");
     const tailorPanel  = document.getElementById("tailor-panel");
-    const panels = [inputPanel, loadingPanel, resultsPanel, historyPanel, helpPanel, tailorPanel];
+    const interviewPanel = document.getElementById("interview-panel");
+    const mockPanel    = document.getElementById("mock-panel");
+    const panels = [inputPanel, loadingPanel, resultsPanel, historyPanel, helpPanel, tailorPanel, interviewPanel, mockPanel];
 
     /* ---- File Upload ---- */
     const dropZone       = document.getElementById("drop-zone");
@@ -178,6 +189,27 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ---- History ---- */
     const scoreHistoryList  = document.getElementById("score-history-list");
     const historyEmptyState = document.getElementById("history-empty-state");
+    const interviewHistoryList = document.getElementById("interview-history-list");
+    const interviewHistoryEmptyState = document.getElementById("interview-history-empty-state");
+
+    /* ---- Mock Interview Buttons & Elements ---- */
+    const startMockInterviewBtn = document.getElementById("start-mock-interview-btn");
+    const interviewResultSection = document.getElementById("interview-result-section");
+    const mockInterviewSection = document.getElementById("mock-interview-section");
+    const mockQuestionCounter = document.getElementById("mock-question-counter");
+    const exitMockBtn = document.getElementById("exit-mock-btn");
+    const mockQuestionText = document.getElementById("mock-question-text");
+    const playTtsBtn = document.getElementById("play-tts-btn");
+    const recordSttBtn = document.getElementById("record-stt-btn");
+    const recordBtnText = document.getElementById("record-btn-text");
+    const recordIcon = document.getElementById("record-icon");
+    const mockAnswerText = document.getElementById("mock-answer-text");
+    const submitAnswerBtn = document.getElementById("submit-answer-btn");
+    const nextQuestionBtn = document.getElementById("next-question-btn");
+    const mockEvalSection = document.getElementById("mock-eval-section");
+    const mockEvalScore = document.getElementById("mock-eval-score");
+    const mockEvalFeedback = document.getElementById("mock-eval-feedback");
+    const mockEvalExample = document.getElementById("mock-eval-example");
 
     /* ---- Sidebar stats ---- */
     const statAnalyses  = document.getElementById("stat-analyses");
@@ -222,6 +254,16 @@ document.addEventListener("DOMContentLoaded", () => {
     navTailorBtn.addEventListener("click", () => {
         setActiveNav(navTailorBtn);
         showPanel(tailorPanel);
+    });
+
+    navInterviewBtn.addEventListener("click", () => {
+        setActiveNav(navInterviewBtn);
+        showPanel(interviewPanel);
+    });
+
+    navMockBtn.addEventListener("click", () => {
+        setActiveNav(navMockBtn);
+        showPanel(mockPanel);
     });
 
     navHistoryBtn.addEventListener("click", () => {
@@ -980,4 +1022,383 @@ document.addEventListener("DOMContentLoaded", () => {
     tailorDownloadPdfBtn.addEventListener("click", () => {
         window.print();
     });
+
+    /* ============================================================
+       Interview Prep Drag & Drop File Upload & Logic
+       ============================================================ */
+    let interviewSelectedFile = null;
+    const interviewDropZone       = document.getElementById("interview-drop-zone");
+    const interviewResumeFileInput = document.getElementById("interview-resume-file");
+    const interviewFileDetails    = document.getElementById("interview-file-details");
+    const interviewFileNameEl     = document.getElementById("interview-file-name");
+    const interviewFileSizeEl     = document.getElementById("interview-file-size");
+    const interviewRemoveFileBtn  = document.getElementById("interview-remove-file-btn");
+    const interviewJdTextarea     = document.getElementById("interview-jd-text");
+    const interviewJdCharCount    = document.getElementById("interview-jd-char-count");
+    const interviewGenerateBtn    = document.getElementById("interview-generate-btn");
+    const interviewChecklist      = document.getElementById("interview-checklist");
+    const interviewQuestionsList  = document.getElementById("interview-questions-list");
+
+    if (interviewDropZone) {
+        interviewDropZone.addEventListener("click", () => interviewResumeFileInput.click());
+
+        ["dragenter", "dragover"].forEach(ev => {
+            interviewDropZone.addEventListener(ev, (e) => {
+                e.preventDefault(); e.stopPropagation();
+                interviewDropZone.classList.add("dragover");
+            }, false);
+        });
+
+        ["dragleave", "drop"].forEach(ev => {
+            interviewDropZone.addEventListener(ev, (e) => {
+                e.preventDefault(); e.stopPropagation();
+                interviewDropZone.classList.remove("dragover");
+            }, false);
+        });
+
+        interviewDropZone.addEventListener("drop", (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length) handleInterviewFileSelect(files[0]);
+        });
+
+        interviewResumeFileInput.addEventListener("change", (e) => {
+            const files = e.target.files;
+            if (files.length) handleInterviewFileSelect(files[0]);
+        });
+
+        function handleInterviewFileSelect(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'pdf' && ext !== 'docx') {
+                alert("Format unsupported. Please upload a PDF or Microsoft Word DOCX file.");
+                return;
+            }
+            interviewSelectedFile = file;
+            interviewFileNameEl.textContent = file.name;
+            interviewFileSizeEl.textContent = formatBytes(file.size);
+            interviewDropZone.style.display = "none";
+            interviewFileDetails.style.display = "flex";
+        }
+
+        interviewRemoveFileBtn.addEventListener("click", () => {
+            interviewSelectedFile = null;
+            interviewResumeFileInput.value = "";
+            interviewDropZone.style.display = "block";
+            interviewFileDetails.style.display = "none";
+        });
+
+        interviewJdTextarea.addEventListener("input", () => {
+            const count = interviewJdTextarea.value.length;
+            interviewJdCharCount.textContent = `${count.toLocaleString()} character${count !== 1 ? 's' : ''}`;
+        });
+
+        interviewGenerateBtn.addEventListener("click", async () => {
+            if (!interviewSelectedFile) {
+                alert("Please upload your resume file (PDF or DOCX) first.");
+                return;
+            }
+
+            const jdText = interviewJdTextarea.value.trim();
+            if (!jdText) {
+                alert("Please paste the target job description to match against.");
+                return;
+            }
+
+            const originalBtnText = interviewGenerateBtn.innerHTML;
+            interviewGenerateBtn.innerHTML = '<div class="spinner-glow" style="width:16px;height:16px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></div> Generating...';
+            interviewGenerateBtn.disabled = true;
+            interviewResultSection.style.display = "none";
+
+            const formData = new FormData();
+            formData.append("resume", interviewSelectedFile);
+            formData.append("jd", jdText);
+
+            try {
+                const response = await fetch("/api/interview-prep", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Server returned an error during generation.");
+                }
+
+                const data = await response.json();
+                
+                // Store questions in state for mock interview
+                state.mockQuestions = data.questions.map(q => q.question);
+                
+                // Render Checklist
+                interviewChecklist.innerHTML = "";
+                data.checklist.forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    interviewChecklist.appendChild(li);
+                });
+
+                // Render Questions
+                interviewQuestionsList.innerHTML = "";
+                data.questions.forEach((q, idx) => {
+                    const card = document.createElement("div");
+                    card.className = "bullet-rewrite-card";
+                    card.innerHTML = `
+                        <div class="bullet-header" style="background: transparent; border-bottom: 1px solid rgba(192, 192, 192, 0.1);">
+                            <h4 style="margin: 0;">Question ${idx + 1}</h4>
+                        </div>
+                        <div class="bullet-body">
+                            <div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1.05rem; color: var(--text-primary);">"${q.question}"</div>
+                            <div style="margin-bottom: 0.5rem; color: var(--text-secondary);"><strong>Why:</strong> ${q.reasoning}</div>
+                            <div style="color: var(--text-secondary);"><strong>Tips:</strong> ${q.tips}</div>
+                        </div>
+                    `;
+                    interviewQuestionsList.appendChild(card);
+                });
+
+                interviewResultSection.style.display = "block";
+                interviewResultSection.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error("Interview prep error:", error);
+                alert(error.message);
+            } finally {
+                interviewGenerateBtn.innerHTML = originalBtnText;
+                interviewGenerateBtn.disabled = false;
+            }
+        });
+    }
+
+    /* ============================================================
+       Mock Interview Interactive Logic
+       ============================================================ */
+    
+    // Initialize Web Speech API for STT
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        state.recognition = new SpeechRecognition();
+        state.recognition.continuous = true;
+        state.recognition.interimResults = true;
+
+        state.recognition.onresult = (event) => {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript) {
+                mockAnswerText.value = (mockAnswerText.value + ' ' + finalTranscript).trim();
+            }
+        };
+
+        state.recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            stopRecording();
+        };
+
+        state.recognition.onend = () => {
+            if (state.isRecording) {
+                state.recognition.start();
+            }
+        };
+    } else {
+        console.warn("Speech Recognition API not supported in this browser.");
+        if(recordSttBtn) recordSttBtn.style.display = "none";
+    }
+
+    function toggleRecording() {
+        if (!state.recognition) return;
+        
+        if (state.isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    }
+
+    function startRecording() {
+        state.isRecording = true;
+        state.recognition.start();
+        recordSttBtn.classList.add("recording");
+        recordBtnText.textContent = "Stop Recording";
+        recordIcon.innerHTML = `<rect x="6" y="6" width="12" height="12"></rect>`;
+    }
+
+    function stopRecording() {
+        state.isRecording = false;
+        state.recognition.stop();
+        recordSttBtn.classList.remove("recording");
+        recordBtnText.textContent = "Start Recording";
+        recordIcon.innerHTML = `
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+        `;
+    }
+
+    // TTS Logic
+    function playTTS(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
+            if(englishVoice) utterance.voice = englishVoice;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function loadMockQuestion() {
+        if (state.currentMockIndex >= state.mockQuestions.length) {
+            alert("Mock Interview Complete! Check your Dashboard history.");
+            exitMockInterview();
+            return;
+        }
+
+        const question = state.mockQuestions[state.currentMockIndex];
+        mockQuestionCounter.textContent = `Question ${state.currentMockIndex + 1} of ${state.mockQuestions.length}`;
+        mockQuestionText.textContent = question;
+        mockAnswerText.value = "";
+        mockEvalSection.style.display = "none";
+        
+        submitAnswerBtn.style.display = "inline-flex";
+        nextQuestionBtn.style.display = "none";
+        if(recordSttBtn) recordSttBtn.style.display = "inline-flex";
+        
+        setTimeout(() => playTTS(question), 500);
+    }
+
+    function startMockInterview() {
+        if (!state.mockQuestions || state.mockQuestions.length === 0) return;
+        state.currentMockIndex = 0;
+        
+        document.getElementById("mock-interview-empty").style.display = "none";
+        mockInterviewSection.style.display = "block";
+        
+        setActiveNav(navMockBtn);
+        showPanel(mockPanel);
+        
+        loadMockQuestion();
+    }
+
+    function exitMockInterview() {
+        if (state.isRecording) stopRecording();
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        
+        mockInterviewSection.style.display = "none";
+        document.getElementById("mock-interview-empty").style.display = "block";
+        
+        setActiveNav(navInterviewBtn);
+        showPanel(interviewPanel);
+    }
+
+    async function evaluateAnswer() {
+        const answer = mockAnswerText.value.trim();
+        if (!answer) return alert("Please record or type an answer before evaluating.");
+        
+        if (state.isRecording) stopRecording();
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+        const file = document.getElementById("interview-resume-file").files[0];
+        const jd = document.getElementById("interview-jd-text").value;
+        const question = state.mockQuestions[state.currentMockIndex];
+
+        const formData = new FormData();
+        formData.append("resume", file);
+        formData.append("jd", jd);
+        formData.append("question", question);
+        formData.append("answer", answer);
+
+        submitAnswerBtn.disabled = true;
+        submitAnswerBtn.innerHTML = `<div class="spinner-glow" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></div> Evaluating...`;
+
+        try {
+            const response = await fetch("/api/evaluate-interview", {
+                method: "POST",
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Evaluation failed.");
+            }
+
+            const data = await response.json();
+            
+            // Show evaluation results
+            mockEvalScore.textContent = data.score;
+            mockEvalFeedback.textContent = data.feedback;
+            mockEvalExample.textContent = data.example_answer;
+            mockEvalSection.style.display = "block";
+
+            // Swap buttons
+            submitAnswerBtn.style.display = "none";
+            nextQuestionBtn.style.display = "inline-flex";
+            if(recordSttBtn) recordSttBtn.style.display = "none";
+
+            // Save to history
+            state.mockHistory.unshift({
+                question: question,
+                score: data.score,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            renderInterviewHistory();
+
+        } catch (error) {
+            alert("Error: " + error.message);
+        } finally {
+            submitAnswerBtn.disabled = false;
+            submitAnswerBtn.innerHTML = `Evaluate Answer`;
+        }
+    }
+
+    function renderInterviewHistory() {
+        if (state.mockHistory.length === 0) {
+            interviewHistoryEmptyState.style.display = "block";
+            return;
+        }
+        interviewHistoryEmptyState.style.display = "none";
+        
+        const existingItems = interviewHistoryList.querySelectorAll(".score-history-item");
+        existingItems.forEach(el => el.remove());
+
+        state.mockHistory.forEach(entry => {
+            const tier = entry.score >= 8 ? "hs-high" : entry.score >= 5 ? "hs-medium" : "hs-low";
+            const percentScore = entry.score * 10;
+
+            const item = document.createElement("div");
+            item.className = "score-history-item";
+            item.innerHTML = `
+                <div class="history-score-badge ${tier}">${percentScore}%</div>
+                <div class="history-meta" style="flex: 1; overflow: hidden;">
+                    <h5 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-bottom: 2px;">Q: ${entry.question}</h5>
+                    <p style="margin: 0;">Evaluated at ${entry.timestamp}</p>
+                </div>
+                <span style="color:var(--text-muted); font-size:0.8rem; font-weight: 600; white-space: nowrap;">Score: ${entry.score}/10</span>
+            `;
+            interviewHistoryList.appendChild(item);
+        });
+    }
+
+    // Event Listeners for Mock Interview
+    if (startMockInterviewBtn) startMockInterviewBtn.addEventListener("click", startMockInterview);
+    if (exitMockBtn) exitMockBtn.addEventListener("click", exitMockInterview);
+    if (playTtsBtn) playTtsBtn.addEventListener("click", () => playTTS(state.mockQuestions[state.currentMockIndex]));
+    if (recordSttBtn) recordSttBtn.addEventListener("click", toggleRecording);
+    if (submitAnswerBtn) submitAnswerBtn.addEventListener("click", evaluateAnswer);
+    if (nextQuestionBtn) {
+        nextQuestionBtn.addEventListener("click", () => {
+            state.currentMockIndex++;
+            loadMockQuestion();
+        });
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
 });

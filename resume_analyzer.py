@@ -23,6 +23,20 @@ class BulletPointImprovement(BaseModel):
     improved: str = Field(description="A stronger rewritten version of the bullet point using strong action verbs. Do NOT invent metrics, percentages, or experience. Only use facts from the resume.")
     reason: str = Field(description="Identify why the original is weak and explain the improvements made. If there is not enough information to quantify, explicitly state what measurable/quantifiable information the user should add themselves.")
 
+class InterviewQuestion(BaseModel):
+    question: str = Field(description="The interview question")
+    reasoning: str = Field(description="Why this question is being asked based on the resume and JD")
+    tips: str = Field(description="Tips on how to answer this question effectively")
+
+class InterviewPrep(BaseModel):
+    questions: List[InterviewQuestion] = Field(description="List of personalized interview questions")
+    checklist: List[str] = Field(description="Specific preparation checklist for the candidate")
+
+class InterviewEvaluation(BaseModel):
+    score: int = Field(description="Evaluation score from 1 to 10")
+    feedback: str = Field(description="Constructive feedback on the answer, highlighting what was good and what could be improved based on the resume and JD")
+    example_answer: str = Field(description="An example of how a 10/10 answer to this question would sound like, using the candidate's background")
+
 class ResumeAnalysis(BaseModel):
     match_score: int = Field(description="Overall ATS match score between the resume and the job description, from 0 to 100")
     rating: str = Field(description="Overall fit description, e.g., 'Excellent Match', 'Strong Match', 'Partial Match', 'Low Match'")
@@ -232,3 +246,91 @@ Return ONLY the Markdown formatted cover letter. Do not include any introductory
         ),
     )
     return response.text
+
+def generate_interview_prep(resume_text: str, jd_text: str, api_key: Optional[str] = None) -> InterviewPrep:
+    """
+    Generates personalized interview questions and a preparation checklist.
+    """
+    effective_api_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not effective_api_key:
+        raise ValueError("Gemini API key is required. Please set the GEMINI_API_KEY environment variable or pass it in the request.")
+
+    client = genai.Client(api_key=effective_api_key)
+
+    prompt = f"""
+You are an expert technical recruiter and interview coach.
+Based on the provided resume and Job Description (JD), generate a personalized set of interview questions and a specific preparation checklist.
+Include:
+1. 5-7 targeted interview questions that probe both strengths and potential gaps in the candidate's resume relative to the JD.
+2. The reasoning for each question.
+3. Tips on how to answer.
+4. A 5-point preparation checklist for the candidate before the interview.
+
+Resume Text:
+{resume_text}
+
+Job Description:
+{jd_text}
+"""
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=InterviewPrep,
+            temperature=0.4,
+        ),
+    )
+    if hasattr(response, 'parsed') and response.parsed:
+        return response.parsed
+    else:
+        import json
+        data = json.loads(response.text)
+        return InterviewPrep(**data)
+
+def evaluate_interview_answer(question: str, answer: str, jd_text: str, resume_text: str, api_key: Optional[str] = None) -> InterviewEvaluation:
+    """
+    Evaluates a candidate's spoken/transcribed answer to an interview question.
+    """
+    effective_api_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not effective_api_key:
+        raise ValueError("Gemini API key is required. Please set the GEMINI_API_KEY environment variable or pass it in the request.")
+
+    client = genai.Client(api_key=effective_api_key)
+
+    prompt = f"""
+You are an expert technical recruiter and interview coach.
+The candidate has provided an answer to the following interview question. Evaluate their answer based on how well it aligns with the Job Description and their own Resume.
+
+Interview Question:
+{question}
+
+Candidate's Answer:
+{answer}
+
+Resume Text:
+{resume_text}
+
+Job Description:
+{jd_text}
+
+Provide:
+1. A score from 1 to 10 evaluating the quality, relevance, and articulation of the answer.
+2. Constructive feedback explaining what was good and what was missing or poorly articulated.
+3. An example of a 10/10 answer they could have given using their exact experience from the resume.
+"""
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=InterviewEvaluation,
+            temperature=0.3,
+        ),
+    )
+    if hasattr(response, 'parsed') and response.parsed:
+        return response.parsed
+    else:
+        import json
+        data = json.loads(response.text)
+        return InterviewEvaluation(**data)

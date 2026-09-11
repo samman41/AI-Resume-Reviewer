@@ -9,7 +9,7 @@ import uvicorn
 # Load local environment variables from .env if present
 load_dotenv()
 
-from resume_analyzer import extract_resume_text, analyze_resume, tailor_resume, generate_cover_letter
+from resume_analyzer import extract_resume_text, analyze_resume, tailor_resume, generate_cover_letter, generate_interview_prep, evaluate_interview_answer
 
 app = FastAPI(
     title="AI Resume Reviewer API",
@@ -161,6 +161,92 @@ async def api_cover_letter(
             raise HTTPException(status_code=429, detail="Gemini API quota exceeded. Please try again later.")
         else:
             raise HTTPException(status_code=500, detail=f"Gemini API cover letter generation failed: {err_msg}")
+
+@app.post("/api/interview-prep")
+async def api_interview_prep(
+    resume: UploadFile = File(...),
+    jd: str = Form(...),
+    x_gemini_api_key: str = Header(None)
+):
+    """
+    Endpoint to generate interview prep.
+    """
+    if not jd.strip():
+        raise HTTPException(status_code=400, detail="Job description text cannot be empty.")
+    
+    try:
+        contents = await resume.read()
+        resume_text = extract_resume_text(resume.filename, contents)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process resume file: {str(e)}")
+    
+    if not resume_text.strip():
+        raise HTTPException(status_code=400, detail="We couldn't find any readable text in this resume.")
+
+    api_key = x_gemini_api_key or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Gemini API Key is missing. Please provide it in the X-Gemini-API-Key header or set it in the backend environment."
+        )
+
+    try:
+        prep = generate_interview_prep(resume_text, jd, api_key=api_key)
+        return prep.model_dump() if hasattr(prep, 'model_dump') else prep.dict()
+    except Exception as e:
+        err_msg = str(e)
+        if "API_KEY_INVALID" in err_msg or "invalid" in err_msg.lower():
+            raise HTTPException(status_code=401, detail="The provided Gemini API Key is invalid.")
+        elif "quota" in err_msg.lower() or "limit" in err_msg.lower():
+            raise HTTPException(status_code=429, detail="Gemini API quota exceeded. Please try again later.")
+        else:
+            raise HTTPException(status_code=500, detail=f"Gemini API interview prep failed: {err_msg}")
+
+@app.post("/api/evaluate-interview")
+async def api_evaluate_interview(
+    resume: UploadFile = File(...),
+    jd: str = Form(...),
+    question: str = Form(...),
+    answer: str = Form(...),
+    x_gemini_api_key: str = Header(None)
+):
+    """
+    Endpoint to evaluate a user's answer to an interview question.
+    """
+    if not jd.strip() or not question.strip() or not answer.strip():
+        raise HTTPException(status_code=400, detail="Job description, question, and answer cannot be empty.")
+    
+    try:
+        contents = await resume.read()
+        resume_text = extract_resume_text(resume.filename, contents)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process resume file: {str(e)}")
+    
+    if not resume_text.strip():
+        raise HTTPException(status_code=400, detail="We couldn't find any readable text in this resume.")
+
+    api_key = x_gemini_api_key or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Gemini API Key is missing. Please provide it in the X-Gemini-API-Key header or set it in the backend environment."
+        )
+
+    try:
+        evaluation = evaluate_interview_answer(question, answer, jd, resume_text, api_key=api_key)
+        return evaluation.model_dump() if hasattr(evaluation, 'model_dump') else evaluation.dict()
+    except Exception as e:
+        err_msg = str(e)
+        if "API_KEY_INVALID" in err_msg or "invalid" in err_msg.lower():
+            raise HTTPException(status_code=401, detail="The provided Gemini API Key is invalid.")
+        elif "quota" in err_msg.lower() or "limit" in err_msg.lower():
+            raise HTTPException(status_code=429, detail="Gemini API quota exceeded. Please try again later.")
+        else:
+            raise HTTPException(status_code=500, detail=f"Gemini API interview evaluation failed: {err_msg}")
 
 # Serve the static files
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
